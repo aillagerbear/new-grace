@@ -1,14 +1,22 @@
 import { betterAuth } from "better-auth";
 import { genericOAuth } from "better-auth/plugins";
-import Database from "better-sqlite3";
+import postgres from "postgres";
 
-const db = new Database("./db.sqlite");
+// PostgreSQL 연결 설정
+const sql = postgres(process.env.DATABASE_URL!, {
+  max: 10, // 최대 연결 수
+  idle_timeout: 20,
+  connect_timeout: 10,
+});
 
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
 
   // 데이터베이스 설정
-  database: db,
+  database: {
+    provider: "postgres",
+    db: sql,
+  },
 
   // 소셜 로그인 프로바이더 설정
   socialProviders: {
@@ -56,6 +64,7 @@ export const auth = betterAuth({
             return {
               id: user.id,
               email: user.email,
+              emailVerified: false,
               name: user.name || user.nickname,
               image: user.profile_image,
             };
