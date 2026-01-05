@@ -2,9 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, Menu, ChevronDown } from "lucide-react";
+import { LoginModal } from "@/components/auth/login-modal";
+import { useSession, signOut } from "@/lib/auth-client";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,6 +81,27 @@ const Header = () => {
               <Search className="w-5 h-5" />
             </button>
 
+            {session?.user ? (
+              <div className="hidden sm:flex items-center gap-2 ml-2">
+                <span className="text-[13px] text-[#4A5568]">
+                  {session.user.name || session.user.email}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="inline-flex items-center justify-center h-9 px-4 text-[13px] font-medium text-[#4A5568] hover:text-[#1A202C] transition-colors"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="hidden sm:inline-flex items-center justify-center h-9 px-5 ml-2 bg-[#4299E1] text-white text-[13px] font-semibold rounded-lg hover:bg-[#3182CE] transition-all"
+              >
+                로그인
+              </button>
+            )}
+
               <button className="lg:hidden p-2 text-[#A0AEC0] hover:text-[#4A5568] transition-colors">
                 <Menu className="w-6 h-6" />
               </button>
@@ -85,6 +110,12 @@ const Header = () => {
         </div>
       </header>
       <div className="h-[64px]" /> {/* Spacer to prevent content jump */}
+
+      {/* 로그인 모달 */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </>
   );
 };
