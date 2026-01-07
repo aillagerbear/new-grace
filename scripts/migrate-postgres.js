@@ -23,6 +23,7 @@ const migrations = [
     id TEXT PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "expiresAt" TIMESTAMP NOT NULL,
+    token TEXT,
     "ipAddress" TEXT,
     "userAgent" TEXT,
     "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -65,6 +66,7 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_verification_identifier ON verification(identifier)`,
 
   // 기존 테이블에 누락된 컬럼 추가 (ALTER TABLE)
+  `ALTER TABLE session ADD COLUMN IF NOT EXISTS token TEXT`,
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS "accessTokenExpiresAt" TIMESTAMP`,
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS "refreshTokenExpiresAt" TIMESTAMP`,
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS scope TEXT`,
