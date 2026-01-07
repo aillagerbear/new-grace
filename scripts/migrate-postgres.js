@@ -40,6 +40,9 @@ const migrations = [
     "refreshToken" TEXT,
     "idToken" TEXT,
     "expiresAt" TIMESTAMP,
+    "accessTokenExpiresAt" TIMESTAMP,
+    "refreshTokenExpiresAt" TIMESTAMP,
+    scope TEXT,
     password TEXT,
     "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
     "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -60,6 +63,11 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_session_userId ON session("userId")`,
   `CREATE INDEX IF NOT EXISTS idx_account_userId ON account("userId")`,
   `CREATE INDEX IF NOT EXISTS idx_verification_identifier ON verification(identifier)`,
+
+  // 기존 테이블에 누락된 컬럼 추가 (ALTER TABLE)
+  `ALTER TABLE account ADD COLUMN IF NOT EXISTS "accessTokenExpiresAt" TIMESTAMP`,
+  `ALTER TABLE account ADD COLUMN IF NOT EXISTS "refreshTokenExpiresAt" TIMESTAMP`,
+  `ALTER TABLE account ADD COLUMN IF NOT EXISTS scope TEXT`,
 ];
 
 async function runMigrations() {
