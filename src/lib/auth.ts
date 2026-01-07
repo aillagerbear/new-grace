@@ -16,6 +16,13 @@ export const auth = betterAuth({
   // 데이터베이스 설정 - Pool 인스턴스를 직접 전달
   database: pool,
 
+  // 신뢰할 수 있는 origin 설정
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://port-next-new-grace-mi84sw7cd03bef80.sel3.cloudtype.app",
+  ],
+
   // 소셜 로그인 프로바이더 설정
   socialProviders: {
     // 구글 로그인
