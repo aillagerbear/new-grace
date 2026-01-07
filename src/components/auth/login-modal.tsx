@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { signIn } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -16,14 +16,25 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  const handleSocialLogin = async (provider: "google" | "kakao" | "naver") => {
+  const handleSocialLogin = async (provider: "google" | "kakao") => {
     try {
-      await signIn.social({
+      await authClient.signIn.social({
         provider,
         callbackURL: "/",
       });
     } catch (error) {
       console.error("로그인 에러:", error);
+    }
+  };
+
+  const handleNaverLogin = async () => {
+    try {
+      await authClient.signIn.oauth2({
+        providerId: "naver",
+        callbackURL: "/",
+      });
+    } catch (error) {
+      console.error("네이버 로그인 에러:", error);
     }
   };
 
@@ -51,7 +62,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
           {/* 네이버 로그인 */}
           <button
-            onClick={() => handleSocialLogin("naver")}
+            onClick={handleNaverLogin}
             className="w-full flex items-center justify-center gap-3 h-12 px-4 bg-[#03C75A] text-white font-medium rounded-lg hover:bg-[#02B150] transition-colors"
           >
             <NaverIcon />
