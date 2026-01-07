@@ -1,22 +1,28 @@
 import { betterAuth } from "better-auth";
 import { genericOAuth } from "better-auth/plugins";
-import postgres from "postgres";
+import { Kysely, PostgresDialect } from "kysely";
+import { Pool } from "pg";
 
-// PostgreSQL 연결 설정
-const sql = postgres(process.env.DATABASE_URL!, {
-  max: 10, // 최대 연결 수
-  idle_timeout: 20,
-  connect_timeout: 10,
+// PostgreSQL 연결 풀 설정
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 20000,
+  connectionTimeoutMillis: 10000,
+});
+
+// Kysely 인스턴스 생성
+const db = new Kysely<any>({
+  dialect: new PostgresDialect({
+    pool,
+  }),
 });
 
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
 
   // 데이터베이스 설정
-  database: {
-    provider: "postgres",
-    db: sql,
-  },
+  database: db,
 
   // 소셜 로그인 프로바이더 설정
   socialProviders: {
