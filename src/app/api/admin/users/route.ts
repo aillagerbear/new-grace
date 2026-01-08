@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -8,19 +9,21 @@ const pool = new Pool({
 });
 
 async function verifyAdminSession() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-
-  if (!session?.value) return false;
-
   try {
-    const decoded = Buffer.from(session.value, "base64").toString();
-    const [prefix, timestamp] = decoded.split(":");
-    const tokenTime = parseInt(timestamp, 10);
-    const now = Date.now();
-    const oneDay = 24 * 60 * 60 * 1000;
+    // Better Auth 세션 가져오기
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    return prefix === "admin" && now - tokenTime < oneDay;
+    if (!session?.user?.id) return false;
+
+    // 사용자 역할 확인
+    const result = await pool.query(
+      `SELECT role FROM "user" WHERE id = $1`,
+      [session.user.id]
+    );
+
+    return result.rows[0]?.role === "admin";
   } catch {
     return false;
   }
