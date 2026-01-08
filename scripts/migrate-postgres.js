@@ -70,6 +70,26 @@ const migrations = [
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS "accessTokenExpiresAt" TIMESTAMP`,
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS "refreshTokenExpiresAt" TIMESTAMP`,
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS scope TEXT`,
+
+  // User 테이블에 role 컬럼 추가 (admin 권한 관리용)
+  `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`,
+
+  // Post 테이블 (게시글 관리용)
+  `CREATE TABLE IF NOT EXISTS post (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT,
+    category TEXT DEFAULT 'general',
+    "authorId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+    "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+    FOREIGN KEY ("authorId") REFERENCES "user"(id) ON DELETE CASCADE
+  )`,
+
+  // Post 인덱스
+  `CREATE INDEX IF NOT EXISTS idx_post_authorId ON post("authorId")`,
+  `CREATE INDEX IF NOT EXISTS idx_post_category ON post(category)`,
+  `CREATE INDEX IF NOT EXISTS idx_post_createdAt ON post("createdAt" DESC)`,
 ];
 
 async function runMigrations() {
