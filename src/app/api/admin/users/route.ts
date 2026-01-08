@@ -10,14 +10,12 @@ const pool = new Pool({
 
 async function verifyAdminSession() {
   try {
-    // Better Auth 세션 가져오기
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     if (!session?.user?.id) return false;
 
-    // 사용자 역할 확인
     const result = await pool.query(
       `SELECT role FROM "user" WHERE id = $1`,
       [session.user.id]

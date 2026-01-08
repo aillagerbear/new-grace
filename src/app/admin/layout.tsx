@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -24,17 +24,16 @@ type AuthState = {
     email: string;
     role: string;
   };
-} | null;
+};
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [authState, setAuthState] = useState<AuthState>(null);
+  const [authState, setAuthState] = useState<AuthState | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
 
   useEffect(() => {
     checkAuth();
@@ -66,7 +65,7 @@ export default function AdminLayout({
   }
 
   // 로그인하지 않은 경우
-  if (!authState.authenticated && authState.reason === "not_logged_in") {
+  if (authState.reason === "not_logged_in") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="max-w-md w-full mx-4">
@@ -83,19 +82,10 @@ export default function AdminLayout({
 
             <Link
               href="/"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
             >
               메인 페이지에서 로그인하기
             </Link>
-
-            <div className="mt-6 text-center">
-              <Link
-                href="/"
-                className="text-sm text-gray-600 hover:text-indigo-600"
-              >
-                ← 메인 사이트로 돌아가기
-              </Link>
-            </div>
           </div>
         </div>
       </div>
@@ -103,7 +93,7 @@ export default function AdminLayout({
   }
 
   // 관리자가 아닌 경우
-  if (!authState.authenticated && authState.reason === "not_admin") {
+  if (authState.reason === "not_admin") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="max-w-md w-full mx-4">
@@ -123,7 +113,7 @@ export default function AdminLayout({
 
             <Link
               href="/"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700"
             >
               메인 사이트로 돌아가기
             </Link>
@@ -133,7 +123,7 @@ export default function AdminLayout({
     );
   }
 
-  // 에러 발생 또는 기타 인증 실패
+  // 인증 실패 (에러 또는 기타)
   if (!authState.authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -142,7 +132,7 @@ export default function AdminLayout({
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-gray-900">오류 발생</h1>
               <p className="text-gray-600 mt-2">
-                인증 확인 중 오류가 발생했습니다. 다시 시도해주세요.
+                인증 확인 중 오류가 발생했습니다.
               </p>
             </div>
 
@@ -161,7 +151,7 @@ export default function AdminLayout({
     );
   }
 
-  // 관리자 대시보드 (authenticated === true 인 경우에만 도달)
+  // 관리자 대시보드
   return (
     <div className="min-h-screen bg-gray-100">
       {/* 모바일 사이드바 토글 */}
