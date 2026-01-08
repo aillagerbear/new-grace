@@ -133,8 +133,8 @@ export default function AdminLayout({
     );
   }
 
-  // 에러 발생
-  if (!authState.authenticated && authState.reason === "error") {
+  // 에러 발생 또는 기타 인증 실패
+  if (!authState.authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="max-w-md w-full mx-4">
@@ -161,7 +161,7 @@ export default function AdminLayout({
     );
   }
 
-  // 관리자 대시보드
+  // 관리자 대시보드 (authenticated === true 인 경우에만 도달)
   return (
     <div className="min-h-screen bg-gray-100">
       {/* 모바일 사이드바 토글 */}
