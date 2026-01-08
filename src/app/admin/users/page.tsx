@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Trash2, ChevronLeft, ChevronRight, Shield, BookOpen } from "lucide-react";
+
+type UserRole = "user" | "pastor" | "admin";
+
+const ROLE_CONFIG: Record<UserRole, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
+  user: { label: "일반", bg: "bg-gray-100", text: "text-gray-700", icon: null },
+  pastor: { label: "목사", bg: "bg-purple-100", text: "text-purple-700", icon: <BookOpen className="w-3 h-3 inline mr-1" /> },
+  admin: { label: "관리자", bg: "bg-indigo-100", text: "text-indigo-700", icon: <Shield className="w-3 h-3 inline mr-1" /> },
+};
 
 interface User {
   id: string;
@@ -32,6 +40,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -86,6 +95,43 @@ export default function UsersPage() {
     } finally {
       setDeleteLoading(null);
     }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    setRoleLoading(userId);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
+
+      if (res.ok) {
+        // 로컬 상태 업데이트
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.id === userId ? { ...user, role: newRole } : user
+          )
+        );
+      } else {
+        alert("역할 변경에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Error updating role:", error);
+      alert("역할 변경 중 오류가 발생했습니다.");
+    } finally {
+      setRoleLoading(null);
+    }
+  };
+
+  const getRoleBadge = (role: string) => {
+    const config = ROLE_CONFIG[role as UserRole] || ROLE_CONFIG.user;
+    return (
+      <span className={`px-2 py-1 text-xs rounded-full ${config.bg} ${config.text} inline-flex items-center`}>
+        {config.icon}
+        {config.label}
+      </span>
+    );
   };
 
   const getProviderBadge = (provider: string) => {
@@ -147,6 +193,9 @@ export default function UsersPage() {
                   로그인 방식
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  역할
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   가입일
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -157,7 +206,7 @@ export default function UsersPage() {
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <div className="flex justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                     </div>
@@ -166,7 +215,7 @@ export default function UsersPage() {
               ) : users.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     사용자가 없습니다
@@ -194,11 +243,6 @@ export default function UsersPage() {
                           <div className="text-sm font-medium text-gray-900">
                             {user.name}
                           </div>
-                          {user.role === "admin" && (
-                            <span className="text-xs text-indigo-600">
-                              관리자
-                            </span>
-                          )}
                         </div>
                       </div>
                     </td>
@@ -210,6 +254,24 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getProviderBadge(user.provider)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {getRoleBadge(user.role)}
+                        <select
+                          value={user.role || "user"}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                          disabled={roleLoading === user.id}
+                          className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                        >
+                          <option value="user">일반</option>
+                          <option value="pastor">목사</option>
+                          <option value="admin">관리자</option>
+                        </select>
+                        {roleLoading === user.id && (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(user.createdAt).toLocaleDateString("ko-KR")}

@@ -71,7 +71,8 @@ const migrations = [
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS "refreshTokenExpiresAt" TIMESTAMP`,
   `ALTER TABLE account ADD COLUMN IF NOT EXISTS scope TEXT`,
 
-  // User 테이블에 role 컬럼 추가 (admin 권한 관리용)
+  // User 테이블에 role 컬럼 추가 (역할 관리용)
+  // 역할: 'user' (일반), 'pastor' (목사), 'admin' (관리자)
   `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'`,
 
   // Post 테이블 (게시글 관리용)

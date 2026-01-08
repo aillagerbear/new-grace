@@ -120,3 +120,41 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+// 사용자 역할 업데이트
+export async function PATCH(request: NextRequest) {
+  try {
+    const isAuthenticated = await verifyAdminSession();
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { userId, role } = await request.json();
+
+    if (!userId) {
+      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+    }
+
+    // 유효한 역할인지 확인
+    const validRoles = ["user", "pastor", "admin"];
+    if (!role || !validRoles.includes(role)) {
+      return NextResponse.json(
+        { error: "Invalid role. Must be one of: user, pastor, admin" },
+        { status: 400 }
+      );
+    }
+
+    await pool.query(`UPDATE "user" SET role = $1, "updatedAt" = NOW() WHERE id = $2`, [
+      role,
+      userId,
+    ]);
+
+    return NextResponse.json({ success: true, role });
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    return NextResponse.json(
+      { error: "Failed to update user role" },
+      { status: 500 }
+    );
+  }
+}
