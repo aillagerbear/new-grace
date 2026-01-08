@@ -54,6 +54,7 @@ export const auth = betterAuth({
           authorizationUrl: "https://nid.naver.com/oauth2.0/authorize",
           tokenUrl: "https://nid.naver.com/oauth2.0/token",
           userInfoUrl: "https://openapi.naver.com/v1/nid/me",
+          redirectURI: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/oauth2/callback/naver`,
           scopes: ["profile", "email"],
           getUserInfo: async (tokens) => {
             const response = await fetch(
