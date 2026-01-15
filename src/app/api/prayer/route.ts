@@ -66,8 +66,9 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Error creating prayer:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "기도 요청 등록에 실패했습니다" },
+      { error: "기도 요청 등록에 실패했습니다", details: errorMessage },
       { status: 500 }
     );
   }
