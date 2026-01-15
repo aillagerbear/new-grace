@@ -61,7 +61,7 @@ export default function NewPrayerPage() {
         throw new Error(data.error || "기도 요청 등록에 실패했습니다");
       }
 
-      router.push("/prayer");
+      router.push("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "오류가 발생했습니다");
     } finally {

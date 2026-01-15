@@ -19,12 +19,9 @@ export async function ensurePrayerTable() {
   try {
     client = await pool.connect();
 
-    // 기존 테이블 삭제 후 재생성 (스키마 변경 시)
-    await client.query(`DROP TABLE IF EXISTS prayer CASCADE`);
-
     // 테이블 생성
     await client.query(`
-      CREATE TABLE prayer (
+      CREATE TABLE IF NOT EXISTS prayer (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         type VARCHAR(20) NOT NULL DEFAULT 'request',
         title VARCHAR(255) NOT NULL,
@@ -42,9 +39,9 @@ export async function ensurePrayerTable() {
     `);
 
     // 인덱스 생성
-    await client.query(`CREATE INDEX idx_prayer_author_id ON prayer(author_id)`);
-    await client.query(`CREATE INDEX idx_prayer_category ON prayer(category)`);
-    await client.query(`CREATE INDEX idx_prayer_created_at ON prayer(created_at DESC)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_prayer_author_id ON prayer(author_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_prayer_category ON prayer(category)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_prayer_created_at ON prayer(created_at DESC)`);
 
     tableInitialized = true;
     console.log("Prayer table created successfully");
