@@ -1,17 +1,20 @@
-"use client";
-
-import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 
 /**
- * HeroCarousel Component - Prayer Community Platform
+ * HeroCarousel Component - Prayer Community Platform (Server Component)
  */
 export default function HeroCarousel() {
   return (
     <div className="relative overflow-hidden w-full rounded-2xl">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/prayer_community_background.png')" }}
+      {/* Background Image - Next.js Image for optimization */}
+      <Image
+        src="/prayer_community_background.png"
+        alt="기도 커뮤니티 배경"
+        fill
+        priority
+        className="object-cover"
+        sizes="(max-width: 1280px) 100vw, 1280px"
       />
       {/* Content */}
       <div className="relative z-10 px-8 py-16 md:py-20 text-center">
@@ -25,18 +28,18 @@ export default function HeroCarousel() {
           나의 기도 제목을 나누고, 서로를 위해 기도하며, 함께 응답을 경험하세요
         </p>
         <div className="flex flex-wrap justify-center gap-3">
-          <a
+          <Link
             href="/prayer/new"
             className="inline-flex items-center px-6 py-3 bg-white text-primary font-semibold rounded-xl hover:bg-white/90 transition-colors"
           >
             기도 요청하기
-          </a>
-          <a
+          </Link>
+          <Link
             href="/prayer"
             className="inline-flex items-center px-6 py-3 bg-primary-foreground/10 text-primary-foreground font-semibold rounded-xl hover:bg-primary-foreground/20 border border-primary-foreground/20 transition-colors"
           >
             함께 기도하기
-          </a>
+          </Link>
         </div>
       </div>
     </div>

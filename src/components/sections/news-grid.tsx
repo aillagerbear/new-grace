@@ -1,8 +1,6 @@
-"use client";
-
-import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { HandHeart, TrendingUp, Sparkles } from 'lucide-react';
+import pool, { ensurePrayerTable } from '@/lib/db';
 
 interface Prayer {
   id: string;
@@ -28,27 +26,42 @@ function formatTimeAgo(dateString: string) {
   return date.toLocaleDateString("ko-KR");
 }
 
-const NewsGrid = () => {
-  const [recentPrayers, setRecentPrayers] = useState<Prayer[]>([]);
-  const [loading, setLoading] = useState(true);
+async function getRecentPrayers(): Promise<Prayer[]> {
+  try {
+    await ensurePrayerTable();
+    const client = await pool.connect();
 
-  useEffect(() => {
-    const fetchPrayers = async () => {
-      try {
-        const res = await fetch("/api/prayer?limit=6");
-        const data = await res.json();
-        if (res.ok) {
-          setRecentPrayers(data.prayers || []);
-        }
-      } catch (error) {
-        console.error("Error fetching prayers:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      const result = await client.query(`
+        SELECT id, title, is_anonymous, author_name, prayer_count, is_answered, created_at
+        FROM prayer
+        WHERE visibility = 'public'
+        ORDER BY created_at DESC
+        LIMIT 6
+      `);
 
-    fetchPrayers();
-  }, []);
+      return result.rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        authorName: row.is_anonymous ? "익명" : (row.author_name || "익명"),
+        prayerCount: row.prayer_count,
+        isAnswered: row.is_answered,
+        createdAt: row.created_at,
+      }));
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error fetching prayers:', error);
+    return [];
+  }
+}
+
+/**
+ * NewsGrid component - Prayer Community Platform (Server Component)
+ */
+export default async function NewsGrid() {
+  const recentPrayers = await getRecentPrayers();
 
   // 최신순, 기도 많은 순, 응답받은 기도로 분류
   const latestPrayers = recentPrayers.slice(0, 3);
@@ -62,7 +75,7 @@ const NewsGrid = () => {
       items: latestPrayers.map(p => ({
         id: p.id,
         title: p.title,
-        author: p.authorName || "익명",
+        author: p.authorName,
         prayers: p.prayerCount,
         time: formatTimeAgo(p.createdAt),
       }))
@@ -73,7 +86,7 @@ const NewsGrid = () => {
       items: popularPrayers.map(p => ({
         id: p.id,
         title: p.title,
-        author: p.authorName || "익명",
+        author: p.authorName,
         prayers: p.prayerCount,
         time: formatTimeAgo(p.createdAt),
       }))
@@ -84,28 +97,12 @@ const NewsGrid = () => {
       items: answeredPrayers.map(p => ({
         id: p.id,
         title: p.title,
-        author: p.authorName || "익명",
+        author: p.authorName,
         badge: "응답",
         time: formatTimeAgo(p.createdAt),
       }))
     },
   ];
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm animate-pulse">
-            <div className="h-14 bg-secondary/30" />
-            <div className="p-5 space-y-3">
-              <div className="h-4 bg-secondary rounded w-3/4" />
-              <div className="h-4 bg-secondary rounded w-1/2" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -174,6 +171,4 @@ const NewsGrid = () => {
       })}
     </div>
   );
-};
-
-export default NewsGrid;
+}

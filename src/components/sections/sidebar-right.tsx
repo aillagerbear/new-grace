@@ -1,8 +1,7 @@
-"use client";
-
-import React, { useEffect, useState } from 'react';
-import { Bell, Hash, Award, Loader2 } from 'lucide-react';
+import { Bell, Hash, Award } from 'lucide-react';
 import Link from 'next/link';
+import pool, { ensurePrayerTable } from '@/lib/db';
+import { PRAYER_CATEGORY_LABELS, PrayerCategory } from '@/types/prayer';
 
 interface CategoryStats {
   id: string;
@@ -10,32 +9,48 @@ interface CategoryStats {
   count: number;
 }
 
-/**
- * SidebarRight component - Prayer Community Platform
- */
-export default function SidebarRight() {
-  const [categories, setCategories] = useState<CategoryStats[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+async function getCategoryStats(): Promise<{ categories: CategoryStats[]; total: number }> {
+  try {
+    await ensurePrayerTable();
+    const client = await pool.connect();
 
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await fetch('/api/prayer/categories');
-        if (res.ok) {
-          const data = await res.json();
-          setCategories(data.categories);
-          setTotal(data.total);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const result = await client.query(`
+        SELECT category, COUNT(*) as count
+        FROM prayer
+        WHERE visibility = 'public'
+        GROUP BY category
+      `);
+
+      const categoryMap = new Map(
+        result.rows.map((row) => [row.category, parseInt(row.count)])
+      );
+
+      const categories = (Object.keys(PRAYER_CATEGORY_LABELS) as PrayerCategory[]).map(
+        (key) => ({
+          id: key,
+          name: PRAYER_CATEGORY_LABELS[key],
+          count: categoryMap.get(key) || 0,
+        })
+      );
+
+      const total = categories.reduce((sum, cat) => sum + cat.count, 0);
+
+      return { categories, total };
+    } finally {
+      client.release();
     }
+  } catch (error) {
+    console.error('Error fetching category stats:', error);
+    return { categories: [], total: 0 };
+  }
+}
 
-    fetchCategories();
-  }, []);
+/**
+ * SidebarRight component - Prayer Community Platform (Server Component)
+ */
+export default async function SidebarRight() {
+  const { categories, total } = await getCategoryStats();
 
   return (
     <aside className="w-[320px] shrink-0 hidden xl:block space-y-6">
@@ -62,11 +77,7 @@ export default function SidebarRight() {
           <h3 className="text-[15px] font-semibold text-foreground">기도 카테고리</h3>
         </div>
         <div className="p-4 flex flex-wrap gap-2">
-          {loading ? (
-            <div className="w-full flex items-center justify-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : categories.length === 0 ? (
+          {categories.length === 0 ? (
             <p className="text-[13px] text-muted-foreground w-full text-center py-4">
               카테고리가 없습니다
             </p>

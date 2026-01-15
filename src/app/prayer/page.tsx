@@ -1,8 +1,9 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, HandHeart, Clock, Filter } from "lucide-react";
+import { ArrowLeft, Plus, HandHeart, Clock } from "lucide-react";
+import pool, { ensurePrayerTable } from "@/lib/db";
+import PrayerFilter from "@/components/prayer/prayer-filter";
+import PrayerPagination from "@/components/prayer/prayer-pagination";
 
 interface Prayer {
   id: string;
@@ -17,15 +18,22 @@ interface Prayer {
   createdAt: string;
 }
 
-const categories = [
-  { value: "", label: "전체" },
-  { value: "health", label: "건강", emoji: "🏥" },
-  { value: "family", label: "가정", emoji: "👨‍👩‍👧‍👦" },
-  { value: "work", label: "직장", emoji: "💼" },
-  { value: "study", label: "학업", emoji: "📚" },
-  { value: "general", label: "일반", emoji: "🙏" },
-  { value: "etc", label: "기타", emoji: "✨" },
-];
+interface PrayerListResult {
+  prayers: Prayer[];
+  pagination: {
+    page: number;
+    totalPages: number;
+  };
+}
+
+const categories: Record<string, { label: string; emoji: string }> = {
+  health: { label: "건강", emoji: "🏥" },
+  family: { label: "가정", emoji: "👨‍👩‍👧‍👦" },
+  work: { label: "직장", emoji: "💼" },
+  study: { label: "학업", emoji: "📚" },
+  general: { label: "일반", emoji: "🙏" },
+  etc: { label: "기타", emoji: "✨" },
+};
 
 function formatTimeAgo(dateString: string) {
   const now = new Date();
@@ -42,40 +50,189 @@ function formatTimeAgo(dateString: string) {
   return date.toLocaleDateString("ko-KR");
 }
 
-export default function PrayerListPage() {
-  const [prayers, setPrayers] = useState<Prayer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+async function getPrayers(category?: string, page: number = 1): Promise<PrayerListResult> {
+  try {
+    await ensurePrayerTable();
+    const client = await pool.connect();
+    const limit = 10;
+    const offset = (page - 1) * limit;
 
-  useEffect(() => {
-    fetchPrayers();
-  }, [category, page]);
-
-  const fetchPrayers = async () => {
-    setLoading(true);
     try {
-      const params = new URLSearchParams({ page: page.toString(), limit: "10" });
-      if (category) params.set("category", category);
+      let whereClause = "WHERE visibility = 'public'";
+      const params: (string | number)[] = [];
+      let paramIndex = 1;
 
-      const res = await fetch(`/api/prayer?${params}`);
-      const data = await res.json();
-
-      if (res.ok) {
-        setPrayers(data.prayers);
-        setTotalPages(data.pagination.totalPages);
+      if (category) {
+        whereClause += ` AND category = $${paramIndex}`;
+        params.push(category);
+        paramIndex++;
       }
-    } catch (error) {
-      console.error("Error fetching prayers:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const getCategoryInfo = (cat: string) => {
-    return categories.find((c) => c.value === cat) || { label: cat, emoji: "🙏" };
-  };
+      // Count total
+      const countResult = await client.query(
+        `SELECT COUNT(*) FROM prayer ${whereClause}`,
+        params
+      );
+      const total = parseInt(countResult.rows[0].count);
+
+      // Get list
+      params.push(limit, offset);
+      const listResult = await client.query(
+        `SELECT id, type, title, content, category, is_anonymous, author_name, prayer_count, is_answered, created_at
+         FROM prayer
+         ${whereClause}
+         ORDER BY created_at DESC
+         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+        params
+      );
+
+      return {
+        prayers: listResult.rows.map((row) => ({
+          id: row.id,
+          type: row.type,
+          title: row.title,
+          content: row.content,
+          category: row.category,
+          isAnonymous: row.is_anonymous,
+          authorName: row.is_anonymous ? "익명" : row.author_name,
+          prayerCount: row.prayer_count,
+          isAnswered: row.is_answered,
+          createdAt: row.created_at,
+        })),
+        pagination: {
+          page,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error("Error fetching prayers:", error);
+    return { prayers: [], pagination: { page: 1, totalPages: 1 } };
+  }
+}
+
+function getCategoryInfo(cat: string) {
+  return categories[cat] || { label: cat, emoji: "🙏" };
+}
+
+// Prayer List Component (Server)
+async function PrayerList({ category, page }: { category?: string; page: number }) {
+  const { prayers, pagination } = await getPrayers(category, page);
+
+  if (prayers.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <HandHeart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">아직 기도 요청이 없습니다</p>
+        <Link
+          href="/prayer/new"
+          className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          첫 기도 요청 올리기
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {prayers.map((prayer) => {
+        const catInfo = getCategoryInfo(prayer.category);
+        return (
+          <article
+            key={prayer.id}
+            className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm px-2 py-0.5 bg-secondary rounded-full">
+                  {catInfo.emoji} {catInfo.label}
+                </span>
+                {prayer.isAnswered && (
+                  <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full">
+                    ✓ 응답됨
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                {formatTimeAgo(prayer.createdAt)}
+              </div>
+            </div>
+
+            {/* Content */}
+            <h2 className="text-[15px] font-semibold text-foreground mb-2">
+              {prayer.title}
+            </h2>
+            <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+              {prayer.content}
+            </p>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {prayer.authorName || "익명"}
+              </span>
+              <div className="flex items-center gap-1 text-sm text-primary">
+                <HandHeart className="w-4 h-4" />
+                <span>{prayer.prayerCount}명 기도 중</span>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+
+      <Suspense fallback={null}>
+        <PrayerPagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+        />
+      </Suspense>
+    </div>
+  );
+}
+
+// Loading skeleton for the list
+function PrayerListSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className="bg-card rounded-2xl border border-border p-5 animate-pulse"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="h-6 w-20 bg-secondary rounded-full" />
+            <div className="h-4 w-16 bg-secondary rounded" />
+          </div>
+          <div className="h-5 w-3/4 bg-secondary rounded mb-2" />
+          <div className="space-y-2 mb-4">
+            <div className="h-4 w-full bg-secondary rounded" />
+            <div className="h-4 w-2/3 bg-secondary rounded" />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-16 bg-secondary rounded" />
+            <div className="h-4 w-24 bg-secondary rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Main Page Component (Server)
+export default async function PrayerListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const category = params.category;
+  const page = parseInt(params.page || "1");
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,123 +255,26 @@ export default function PrayerListPage() {
         </div>
       </header>
 
-      {/* Category Filter */}
-      <div className="sticky top-[65px] z-40 bg-card border-b border-border">
-        <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => {
-                  setCategory(cat.value);
-                  setPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-                  category === cat.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary hover:bg-secondary/80 text-foreground"
-                }`}
-              >
-                {cat.emoji && <span className="mr-1">{cat.emoji}</span>}
-                {cat.label}
-              </button>
-            ))}
+      {/* Category Filter (Client Component with Suspense) */}
+      <Suspense fallback={
+        <div className="sticky top-[65px] z-40 bg-card border-b border-border">
+          <div className="max-w-3xl mx-auto px-4 py-3">
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-8 w-16 bg-secondary rounded-full animate-pulse" />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      }>
+        <PrayerFilter />
+      </Suspense>
 
-      {/* Prayer List */}
+      {/* Prayer List (Server Component with Suspense) */}
       <main className="max-w-3xl mx-auto px-4 py-6">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : prayers.length === 0 ? (
-          <div className="text-center py-12">
-            <HandHeart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">아직 기도 요청이 없습니다</p>
-            <Link
-              href="/prayer/new"
-              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              첫 기도 요청 올리기
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {prayers.map((prayer) => {
-              const catInfo = getCategoryInfo(prayer.category);
-              return (
-                <article
-                  key={prayer.id}
-                  className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow"
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm px-2 py-0.5 bg-secondary rounded-full">
-                        {catInfo.emoji} {catInfo.label}
-                      </span>
-                      {prayer.isAnswered && (
-                        <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full">
-                          ✓ 응답됨
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {formatTimeAgo(prayer.createdAt)}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <h2 className="text-[15px] font-semibold text-foreground mb-2">
-                    {prayer.title}
-                  </h2>
-                  <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                    {prayer.content}
-                  </p>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {prayer.authorName || "익명"}
-                    </span>
-                    <div className="flex items-center gap-1 text-sm text-primary">
-                      <HandHeart className="w-4 h-4" />
-                      <span>{prayer.prayerCount}명 기도 중</span>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-2 pt-4">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 rounded-lg border border-border hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  이전
-                </button>
-                <span className="px-4 py-2 text-sm text-muted-foreground">
-                  {page} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="px-4 py-2 rounded-lg border border-border hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  다음
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        <Suspense fallback={<PrayerListSkeleton />}>
+          <PrayerList category={category} page={page} />
+        </Suspense>
       </main>
     </div>
   );
