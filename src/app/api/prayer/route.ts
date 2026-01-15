@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import pool, { initPrayerTable } from "@/lib/db";
+import pool, { ensurePrayerTable } from "@/lib/db";
 import { prayerSchema } from "@/lib/validations/prayer";
-
-// 테이블 초기화 (서버 시작 시)
-initPrayerTable().catch(console.error);
 
 // 기도 요청 생성
 export async function POST(request: NextRequest) {
@@ -34,6 +31,9 @@ export async function POST(request: NextRequest) {
     }
 
     const { type, title, content, category, visibility, isAnonymous } = result.data;
+
+    // 테이블 확인
+    await ensurePrayerTable();
 
     // DB에 저장
     const client = await pool.connect();
@@ -82,6 +82,9 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category");
     const type = searchParams.get("type");
     const offset = (page - 1) * limit;
+
+    // 테이블 확인
+    await ensurePrayerTable();
 
     const client = await pool.connect();
     try {

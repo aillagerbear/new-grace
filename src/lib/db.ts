@@ -9,8 +9,12 @@ const pool = new Pool({
 
 export default pool;
 
-// Prayer 테이블 생성 (처음 한번만 실행)
-export async function initPrayerTable() {
+// Prayer 테이블 생성
+let tableInitialized = false;
+
+export async function ensurePrayerTable() {
+  if (tableInitialized) return;
+
   const client = await pool.connect();
   try {
     await client.query(`
@@ -34,7 +38,7 @@ export async function initPrayerTable() {
       CREATE INDEX IF NOT EXISTS idx_prayer_category ON prayer(category);
       CREATE INDEX IF NOT EXISTS idx_prayer_created_at ON prayer(created_at DESC);
     `);
-    console.log("Prayer table initialized");
+    tableInitialized = true;
   } finally {
     client.release();
   }
