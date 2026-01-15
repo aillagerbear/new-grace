@@ -1,14 +1,41 @@
-import React from 'react';
-import { Bell, Hash, Award } from 'lucide-react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { Bell, Hash, Award, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+
+interface CategoryStats {
+  id: string;
+  name: string;
+  count: number;
+}
 
 /**
  * SidebarRight component - Prayer Community Platform
  */
 export default function SidebarRight() {
-  // TODO: API에서 실제 데이터 가져오기
-  const stats: { label: string; value: string; trend: string }[] = [];
+  const [categories, setCategories] = useState<CategoryStats[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const categories: { name: string; count: number }[] = [];
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/prayer/categories');
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data.categories);
+          setTotal(data.total);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCategories();
+  }, []);
 
   return (
     <aside className="w-[320px] shrink-0 hidden xl:block space-y-6">
@@ -19,17 +46,10 @@ export default function SidebarRight() {
           커뮤니티 현황
         </h3>
         <div className="space-y-3">
-          {stats.map((stat) => (
-            <div key={stat.label} className="flex items-center justify-between">
-              <span className="text-[13px] text-muted-foreground">{stat.label}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-[15px] font-semibold text-foreground">{stat.value}</span>
-                <span className="text-[11px] text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                  {stat.trend}
-                </span>
-              </div>
-            </div>
-          ))}
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] text-muted-foreground">전체 기도제목</span>
+            <span className="text-[15px] font-semibold text-foreground">{total}개</span>
+          </div>
         </div>
       </div>
 
@@ -42,16 +62,28 @@ export default function SidebarRight() {
           <h3 className="text-[15px] font-semibold text-foreground">기도 카테고리</h3>
         </div>
         <div className="p-4 flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <a
-              key={cat.name}
-              href={`/prayer/category/${cat.name}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 hover:bg-secondary rounded-full text-[13px] text-foreground transition-colors"
-            >
-              <span>{cat.name}</span>
-              <span className="text-[11px] text-muted-foreground">{cat.count}</span>
-            </a>
-          ))}
+          {loading ? (
+            <div className="w-full flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : categories.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground w-full text-center py-4">
+              카테고리가 없습니다
+            </p>
+          ) : (
+            categories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/prayer?category=${cat.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 hover:bg-secondary rounded-full text-[13px] text-foreground transition-colors"
+              >
+                <span>{cat.name}</span>
+                <span className="text-[11px] text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                  {cat.count}
+                </span>
+              </Link>
+            ))
+          )}
         </div>
       </div>
 
