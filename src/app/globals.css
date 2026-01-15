@@ -1,87 +1,89 @@
-/* Updated: 2025-12-23T07:19:38.405Z */
-/* Updated: 2025-12-23T07:16:58.833Z */
-/* Updated: 2025-12-23T07:13:03.055Z */
-/* Updated: 2025-12-23T07:11:30.651Z */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Grace Church - Modern Design System */
+/* Updated: 2026-01-15 */
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-background: #F7FAFC;
-  --color-foreground: #1A202C;
+  /* Modern Indigo-based Color Palette */
+  --color-background: #FAFAFA;
+  --color-foreground: #0F172A;
 
   --color-card: #FFFFFF;
-  --color-card-foreground: #1A202C;
+  --color-card-foreground: #1E293B;
 
   --color-popover: #FFFFFF;
-  --color-popover-foreground: #1A202C;
+  --color-popover-foreground: #1E293B;
 
-  --color-primary: #4299E1;
+  /* Primary: Deep Indigo */
+  --color-primary: #4F46E5;
   --color-primary-foreground: #FFFFFF;
 
-  --color-secondary: #EDF2F7;
-  --color-secondary-foreground: #4A5568;
+  /* Secondary: Slate */
+  --color-secondary: #F1F5F9;
+  --color-secondary-foreground: #475569;
 
-  --color-muted: #F1F5F9;
-  --color-muted-foreground: #A0AEC0;
+  /* Muted */
+  --color-muted: #F8FAFC;
+  --color-muted-foreground: #94A3B8;
 
-  --color-accent: #EBF8FF;
-  --color-accent-foreground: #2B6CB0;
+  /* Accent: Warm Amber */
+  --color-accent: #FEF3C7;
+  --color-accent-foreground: #92400E;
 
-  --color-destructive: #E53E3E;
+  --color-destructive: #EF4444;
   --color-destructive-foreground: #FFFFFF;
 
   --color-border: #E2E8F0;
   --color-input: #E2E8F0;
-  --color-ring: #4299E1;
+  --color-ring: #4F46E5;
 
-  --color-chart-1: #4299E1;
-  --color-chart-2: #38A169;
-  --color-chart-3: #E53E3E;
-  --color-chart-4: #D69E2E;
-  --color-chart-5: #805AD5;
+  /* Chart Colors */
+  --color-chart-1: #4F46E5;
+  --color-chart-2: #10B981;
+  --color-chart-3: #F59E0B;
+  --color-chart-4: #EF4444;
+  --color-chart-5: #8B5CF6;
 
+  /* Sidebar */
   --color-sidebar: #FFFFFF;
-  --color-sidebar-foreground: #4A5568;
-  --color-sidebar-primary: #4299E1;
+  --color-sidebar-foreground: #475569;
+  --color-sidebar-primary: #4F46E5;
   --color-sidebar-primary-foreground: #FFFFFF;
-  --color-sidebar-accent: #F7FAFC;
-  --color-sidebar-accent-foreground: #1A202C;
+  --color-sidebar-accent: #F8FAFC;
+  --color-sidebar-accent-foreground: #1E293B;
   --color-sidebar-border: #E2E8F0;
-  --color-sidebar-ring: #4299E1;
+  --color-sidebar-ring: #4F46E5;
 
-  --color-success: #38A169;
-  --color-heading: #1A202C;
-  --color-body: #4A5568;
-  --color-meta: #A0AEC0;
+  /* Semantic Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-heading: #0F172A;
+  --color-body: #475569;
+  --color-meta: #94A3B8;
 
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: "Inter", sans-serif;
+  /* Typography - Pretendard (한글 가독성 최적화) */
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  --font-display: "Pretendard Variable", Pretendard, sans-serif;
+  --font-pretendard: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
-  --radius-lg: 10px;
-  --radius-md: 8px;
-  --radius-sm: 4px;
+  /* Radius */
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
 
+  /* Animations */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
   }
   @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
   }
 }
 
@@ -91,58 +93,96 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: #E2E8F0;
+    border-color: var(--color-border);
   }
 
   :root {
-    --background: #F7FAFC;
-    --foreground: #1A202C;
+    --background: #FAFAFA;
+    --foreground: #0F172A;
     --card: #FFFFFF;
-    --card-foreground: #1A202C;
+    --card-foreground: #1E293B;
     --popover: #FFFFFF;
-    --popover-foreground: #1A202C;
-    --primary: #4299E1;
+    --popover-foreground: #1E293B;
+    --primary: #4F46E5;
     --primary-foreground: #FFFFFF;
-    --secondary: #EDF2F7;
-    --secondary-foreground: #4A5568;
-    --muted: #F1F5F9;
-    --muted-foreground: #A0AEC0;
-    --accent: #EBF8FF;
-    --accent-foreground: #2B6CB0;
-    --destructive: #E53E3E;
+    --secondary: #F1F5F9;
+    --secondary-foreground: #475569;
+    --muted: #F8FAFC;
+    --muted-foreground: #94A3B8;
+    --accent: #FEF3C7;
+    --accent-foreground: #92400E;
+    --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
     --border: #E2E8F0;
     --input: #E2E8F0;
-    --ring: #4299E1;
-    --radius: 10px;
+    --ring: #4F46E5;
+    --radius: 12px;
     --sidebar-background: #FFFFFF;
-    --sidebar-foreground: #4A5568;
-    --sidebar-primary: #4299E1;
+    --sidebar-foreground: #475569;
+    --sidebar-primary: #4F46E5;
     --sidebar-primary-foreground: #FFFFFF;
-    --sidebar-accent: #F7FAFC;
-    --sidebar-accent-foreground: #1A202C;
+    --sidebar-accent: #F8FAFC;
+    --sidebar-accent-foreground: #1E293B;
     --sidebar-border: #E2E8F0;
-    --sidebar-ring: #4299E1;
+    --sidebar-ring: #4F46E5;
+  }
+
+  .dark {
+    --background: #0F172A;
+    --foreground: #F8FAFC;
+    --card: #1E293B;
+    --card-foreground: #F1F5F9;
+    --popover: #1E293B;
+    --popover-foreground: #F1F5F9;
+    --primary: #818CF8;
+    --primary-foreground: #0F172A;
+    --secondary: #334155;
+    --secondary-foreground: #E2E8F0;
+    --muted: #1E293B;
+    --muted-foreground: #64748B;
+    --accent: #451A03;
+    --accent-foreground: #FDE68A;
+    --destructive: #DC2626;
+    --destructive-foreground: #FFFFFF;
+    --border: #334155;
+    --input: #334155;
+    --ring: #818CF8;
+    --sidebar-background: #1E293B;
+    --sidebar-foreground: #E2E8F0;
+    --sidebar-primary: #818CF8;
+    --sidebar-primary-foreground: #0F172A;
+    --sidebar-accent: #334155;
+    --sidebar-accent-foreground: #F8FAFC;
+    --sidebar-border: #334155;
+    --sidebar-ring: #818CF8;
   }
 
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.7;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: var(--color-heading);
-    font-weight: 700;
-    letter-spacing: -0.025em;
+    color: var(--foreground);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
   }
+
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.875rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
 
   a {
     color: inherit;
@@ -151,29 +191,73 @@
   }
 
   a:hover {
-    color: var(--color-primary);
+    color: var(--primary);
   }
 
+  /* Container */
   .container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1280px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
+  /* Utility Classes */
   .font-display {
     font-family: var(--font-display);
   }
 
   .text-meta {
-    color: var(--color-meta);
-    font-size: 12px;
+    color: var(--muted-foreground);
+    font-size: 13px;
   }
 
+  /* Modern Card Shadow */
   .card-shadow {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    box-shadow: 
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .card-shadow-hover {
+    box-shadow: 
+      0 4px 6px rgba(0, 0, 0, 0.04),
+      0 12px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Glass Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .dark .glass {
+    background: rgba(30, 41, 59, 0.8);
+  }
+
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  }
+
+  .gradient-warm {
+    background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+  }
+
+  /* Smooth Transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Focus Ring */
+  .focus-ring:focus-visible {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--ring);
+    ring-offset: 2px;
   }
 }
 

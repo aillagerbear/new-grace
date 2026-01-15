@@ -1,94 +1,125 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Menu, ChevronDown } from "lucide-react";
+import { Search, Menu, ChevronDown, X, PenLine } from "lucide-react";
 import { LoginModal } from "@/components/auth/login-modal";
 import { useSession, signOut } from "@/lib/auth-client";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navItems = [
-    { label: "전체글보기", href: "/all" },
-    { label: "소식", href: "/news" },
+    { label: "기도 요청", href: "/prayer" },
+    { label: "함께 기도", href: "/pray-together" },
+    { label: "응답 이야기", href: "/testimonies" },
     {
-      label: "기도",
-      href: "/prayer",
-      children: ["전체", "건강", "가족", "직장", "학업", "기타"],
+      label: "더보기",
+      href: "#",
+      children: ["커뮤니티", "이용 안내"],
     },
   ];
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-[100] bg-white transition-shadow duration-200 ${
-          isScrolled ? "shadow-md" : "border-b border-[#E2E8F0]"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled
+            ? "bg-card/95 backdrop-blur-md shadow-lg shadow-black/5"
+            : "bg-card border-b border-border"
+          }`}
       >
-        <div className="max-w-[1360px] mx-auto px-4 h-[64px] flex items-center justify-center">
-          <div className="flex items-center gap-8">
-            <a href="/" className="flex-shrink-0">
-              <span className="text-[24px] font-bold text-[#1A202C]">
-                Grace Church
+        <div className="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-2 group">
+            <img
+              src="/logo.jpg"
+              alt="Grace Church"
+              className="w-10 h-10 rounded-xl object-cover shadow-lg"
+            />
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
+                기도하는 손
               </span>
-            </a>
+              <span className="text-[11px] text-muted-foreground leading-tight">
+                함께 기도하는 커뮤니티
+              </span>
+            </div>
+          </a>
 
-            <nav className="hidden lg:block">
-              <ul className="flex items-center">
-                {navItems.map((item) => (
-                  <li
-                    key={item.label}
-                    className="relative group"
-                  >
-                    <a
-                      href={item.href}
-                      className="px-4 py-5 text-[15px] font-medium text-[#4A5568] hover:text-[#4299E1] flex items-center gap-1 transition-colors"
-                    >
-                      {item.label}
-                      {item.children && <ChevronDown className="w-4 h-4" />}
-                    </a>
-                    {item.children && (
-                      <ul className="absolute left-0 top-[100%] bg-white border border-[#E2E8F0] shadow-lg rounded-md py-2 min-w-[140px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[110]">
-                        {item.children.map((child) => (
-                          <li key={child}>
-                            <a
-                              href="#"
-                              className="block px-4 py-2 text-[13px] text-[#4A5568] hover:bg-[#F7FAFC] hover:text-[#4299E1] transition-colors"
-                            >
-                              {child}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </nav>
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {navItems.map((item) => (
+              <div key={item.label} className="relative group">
+                <a
+                  href={item.href}
+                  className="px-4 py-2 text-[15px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg flex items-center gap-1.5 transition-all duration-200"
+                >
+                  {item.label}
+                  {item.children && (
+                    <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                  )}
+                </a>
+                {item.children && (
+                  <ul className="absolute left-0 top-full mt-2 bg-card border border-border shadow-xl shadow-black/10 rounded-xl py-2 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[110]">
+                    {item.children.map((child) => (
+                      <li key={child}>
+                        <a
+                          href="#"
+                          className="block px-4 py-2.5 text-[14px] text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                        >
+                          {child}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </nav>
 
-            <div className="flex items-center gap-2">
-            <button className="p-2 text-[#A0AEC0] hover:text-[#4A5568] transition-colors rounded-lg">
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <button className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all rounded-lg">
               <Search className="w-5 h-5" />
             </button>
 
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
+            {/* Write Prayer Request */}
+            <a
+              href="/prayer/new"
+              className="hidden md:inline-flex items-center gap-1.5 h-10 px-4 bg-primary/10 text-primary text-[14px] font-medium rounded-xl hover:bg-primary/20 transition-all duration-200"
+            >
+              <PenLine className="w-4 h-4" />
+              기도 요청
+            </a>
+
+            {/* User Actions */}
             {session?.user ? (
-              <div className="hidden sm:flex items-center gap-2 ml-2">
-                <span className="text-[13px] text-[#4A5568]">
-                  {session.user.name || session.user.email}
-                </span>
+              <div className="hidden sm:flex items-center gap-3 ml-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                    <span className="text-primary-foreground text-sm font-medium">
+                      {(session.user.name || session.user.email)?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
                 <button
                   onClick={() => signOut()}
-                  className="inline-flex items-center justify-center h-9 px-4 text-[13px] font-medium text-[#4A5568] hover:text-[#1A202C] transition-colors"
+                  className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   로그아웃
                 </button>
@@ -96,22 +127,63 @@ const Header = () => {
             ) : (
               <button
                 onClick={() => setIsLoginModalOpen(true)}
-                className="hidden sm:inline-flex items-center justify-center h-9 px-5 ml-2 bg-[#4299E1] text-white text-[13px] font-semibold rounded-lg hover:bg-[#3182CE] transition-all"
+                className="hidden sm:inline-flex items-center justify-center h-10 px-5 bg-primary text-primary-foreground text-[14px] font-semibold rounded-xl hover:bg-primary/90 transition-colors"
               >
                 로그인
               </button>
             )}
 
-              <button className="lg:hidden p-2 text-[#A0AEC0] hover:text-[#4A5568] transition-colors">
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all rounded-lg"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
                 <Menu className="w-6 h-6" />
-              </button>
-            </div>
+              )}
+            </button>
           </div>
         </div>
-      </header>
-      <div className="h-[64px]" /> {/* Spacer to prevent content jump */}
 
-      {/* 로그인 모달 */}
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden border-t border-border bg-card/95 backdrop-blur-md">
+            <nav className="max-w-[1280px] mx-auto px-6 py-4 space-y-1">
+              {navItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className="block px-4 py-3 text-[15px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-colors"
+                >
+                  {item.label}
+                </a>
+              ))}
+              <a
+                href="/prayer/new"
+                className="flex items-center justify-center gap-2 mt-4 h-12 bg-primary/10 text-primary font-semibold rounded-xl"
+              >
+                <PenLine className="w-4 h-4" />
+                기도 요청하기
+              </a>
+              {!session?.user && (
+                <button
+                  onClick={() => {
+                    setIsLoginModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full mt-2 h-12 bg-primary text-primary-foreground text-[14px] font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  로그인
+                </button>
+              )}
+            </nav>
+          </div>
+        )}
+      </header>
+      <div className="h-16" /> {/* Spacer */}
+
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
