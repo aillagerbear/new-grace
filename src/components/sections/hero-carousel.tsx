@@ -6,15 +6,18 @@ import Image from 'next/image';
  */
 export default function HeroCarousel() {
   return (
-    <div className="relative overflow-hidden w-full rounded-2xl">
-      {/* Background Image - Next.js Image for optimization */}
+    <div className="relative overflow-hidden w-full rounded-2xl min-h-[280px] md:min-h-[320px]">
+      {/* Background Image - Optimized WebP with blur placeholder */}
       <Image
-        src="/prayer_community_background.png"
+        src="/prayer_community_background.webp"
         alt="기도 커뮤니티 배경"
         fill
         priority
         className="object-cover"
-        sizes="(max-width: 1280px) 100vw, 1280px"
+        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
+        quality={85}
+        placeholder="blur"
+        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgIBAwQDAAAAAAAAAAAAAQIDBAAFESEGEhMxQVFh/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAZEQEAAwEBAAAAAAAAAAAAAAABAAIRITH/2gAMAwEAAhEDEEACxEfqk0ySqVYNg4II+xvnNW6e6nh0y3NDCkjJI5dg7DIJ4/O+B+YxmUeNmX//2Q=="
       />
       {/* Content */}
       <div className="relative z-10 px-8 py-16 md:py-20 text-center">
