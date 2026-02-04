@@ -12,20 +12,27 @@ const pool = new Pool({
 
 async function getAuthState() {
   try {
+    console.log("[ADMIN LAYOUT] Getting session...");
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
+    console.log("[ADMIN LAYOUT] Session:", session?.user?.id, session?.user?.email);
+
     if (!session?.user?.id) {
+      console.log("[ADMIN LAYOUT] No session found");
       return { authenticated: false, reason: "not_logged_in" as const };
     }
 
+    console.log("[ADMIN LAYOUT] Querying role for user:", session.user.id);
     const result = await pool.query(
       `SELECT role FROM "user" WHERE id = $1`,
       [session.user.id]
     );
 
+    console.log("[ADMIN LAYOUT] DB result:", result.rows);
     const userRole = result.rows[0]?.role || "user";
+    console.log("[ADMIN LAYOUT] User role:", userRole);
 
     if (userRole !== "admin") {
       return {
@@ -45,7 +52,7 @@ async function getAuthState() {
       },
     };
   } catch (error) {
-    console.error("Admin auth error:", error);
+    console.error("[ADMIN LAYOUT] Error:", error);
     return { authenticated: false, reason: "error" as const };
   }
 }
