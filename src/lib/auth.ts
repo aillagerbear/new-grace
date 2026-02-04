@@ -31,6 +31,44 @@ export const auth = betterAuth({
     level: "debug",
   },
 
+  // DB 작업 훅
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          console.log("[AUTH DB] Creating user:", user);
+          return { data: user };
+        },
+        after: async (user) => {
+          console.log("[AUTH DB] User created:", user);
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          console.log("[AUTH DB] Creating session:", session);
+          return { data: session };
+        },
+        after: async (session) => {
+          console.log("[AUTH DB] Session created:", session);
+        },
+      },
+    },
+    account: {
+      create: {
+        before: async (account) => {
+          console.log("[AUTH DB] Creating account:", account);
+          return { data: account };
+        },
+        after: async (account) => {
+          console.log("[AUTH DB] Account created:", account);
+        },
+      },
+    },
+  },
+
+
   // 신뢰할 수 있는 origin 설정
   trustedOrigins: [
     "http://localhost:3000",
