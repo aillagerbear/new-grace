@@ -7,8 +7,14 @@ const pool = new Pool({
 });
 
 // DB 연결 테스트
+console.log("[AUTH] DATABASE_URL:", process.env.DATABASE_URL?.substring(0, 50) + "...");
+
 pool.query("SELECT 1").then(() => {
   console.log("[AUTH] Database connected successfully");
+  // 테이블 확인
+  return pool.query(`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
+}).then((result) => {
+  console.log("[AUTH] Tables in database:", result?.rows?.map((r: { tablename: string }) => r.tablename));
 }).catch((err) => {
   console.error("[AUTH] Database connection error:", err);
 });
