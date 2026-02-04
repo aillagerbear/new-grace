@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Shield, Heart, ChevronRight, Users } from 'lucide-react';
 
 const Footer = () => {
@@ -31,7 +32,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Info */}
           <div className="md:col-span-2">
-            <a href="/" className="flex items-center gap-2 mb-4">
+            <Link href="/" className="flex items-center gap-2 mb-4">
               <img
                 src="/logo.jpg"
                 alt="기도하는 손"
@@ -45,7 +46,7 @@ const Footer = () => {
                   함께 기도하는 커뮤니티
                 </span>
               </div>
-            </a>
+            </Link>
             <p className="text-[14px] text-muted-foreground leading-relaxed mb-6 max-w-sm">
               기도가 필요한 순간, 혼자가 아닙니다. 기도 제목을 나누고, 서로를 위해 기도하며, 하나님의 응답을 함께 경험하세요.
             </p>
@@ -76,13 +77,13 @@ const Footer = () => {
               <ul className="space-y-2.5">
                 {group.links.map((link) => (
                   <li key={link.label}>
-                    <a
+                    <Link
                       href={link.href}
                       className="group flex items-center text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <ChevronRight className="w-3.5 h-3.5 mr-1 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -98,12 +99,12 @@ const Footer = () => {
             © {currentYear} 기도하는 손. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-            <a href="/privacy" className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/privacy" className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">
               개인정보처리방침
-            </a>
-            <a href="/terms" className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link href="/terms" className="text-[12px] text-muted-foreground hover:text-foreground transition-colors">
               이용약관
-            </a>
+            </Link>
           </div>
         </div>
       </div>

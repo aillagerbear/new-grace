@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { Bell, Hash, Award } from 'lucide-react';
 import Link from 'next/link';
 import pool, { ensurePrayerTable } from '@/lib/db';
@@ -9,7 +10,8 @@ interface CategoryStats {
   count: number;
 }
 
-async function getCategoryStats(): Promise<{ categories: CategoryStats[]; total: number }> {
+// server-cache-react: React.cache()로 요청 당 중복 호출 방지
+const getCategoryStats = cache(async function getCategoryStats(): Promise<{ categories: CategoryStats[]; total: number }> {
   try {
     await ensurePrayerTable();
     const client = await pool.connect();
@@ -44,7 +46,7 @@ async function getCategoryStats(): Promise<{ categories: CategoryStats[]; total:
     console.error('Error fetching category stats:', error);
     return { categories: [], total: 0 };
   }
-}
+});
 
 /**
  * SidebarRight component - Prayer Community Platform (Server Component)

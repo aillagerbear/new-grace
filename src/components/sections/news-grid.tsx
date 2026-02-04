@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import Link from 'next/link';
 import { HandHeart, TrendingUp, Sparkles } from 'lucide-react';
 import pool, { ensurePrayerTable } from '@/lib/db';
@@ -26,7 +27,8 @@ function formatTimeAgo(dateString: string) {
   return date.toLocaleDateString("ko-KR");
 }
 
-async function getRecentPrayers(): Promise<Prayer[]> {
+// server-cache-react: React.cache()로 요청 당 중복 호출 방지
+const getRecentPrayers = cache(async function getRecentPrayers(): Promise<Prayer[]> {
   try {
     await ensurePrayerTable();
     const client = await pool.connect();
@@ -55,7 +57,7 @@ async function getRecentPrayers(): Promise<Prayer[]> {
     console.error('Error fetching prayers:', error);
     return [];
   }
-}
+});
 
 /**
  * NewsGrid component - Prayer Community Platform (Server Component)
