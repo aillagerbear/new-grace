@@ -1,20 +1,14 @@
 import { betterAuth } from "better-auth";
 import { genericOAuth } from "better-auth/plugins";
-import { Pool } from "pg";
-
-// PostgreSQL 연결 풀 설정
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 20000,
-  connectionTimeoutMillis: 10000,
-});
 
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
 
-  // 데이터베이스 설정 - Pool 인스턴스를 직접 전달
-  database: pool,
+  // 데이터베이스 설정 - connectionString 직접 전달
+  database: {
+    provider: "pg",
+    url: process.env.DATABASE_URL!,
+  },
 
   // 신뢰할 수 있는 origin 설정
   trustedOrigins: [
