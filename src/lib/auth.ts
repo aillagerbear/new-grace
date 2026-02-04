@@ -2,13 +2,28 @@ import { betterAuth } from "better-auth";
 import { genericOAuth } from "better-auth/plugins";
 import { Pool } from "pg";
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// DB 연결 테스트
+pool.query("SELECT 1").then(() => {
+  console.log("[AUTH] Database connected successfully");
+}).catch((err) => {
+  console.error("[AUTH] Database connection error:", err);
+});
+
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
 
   // 데이터베이스 설정
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
+  database: pool,
+
+  // 디버그 로깅
+  logger: {
+    disabled: false,
+    level: "debug",
+  },
 
   // 신뢰할 수 있는 origin 설정
   trustedOrigins: [

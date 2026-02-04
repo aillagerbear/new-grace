@@ -31,22 +31,40 @@ export async function OPTIONS(request: Request) {
 
 // GET 핸들러
 export async function GET(request: Request) {
+  const url = new URL(request.url);
+  console.log("[AUTH GET]", url.pathname);
+
   const origin = request.headers.get("origin");
-  const response = await handlers.GET(request);
-  const corsHeaders = getCorsHeaders(origin);
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
-  return response;
+  try {
+    const response = await handlers.GET(request);
+    console.log("[AUTH GET] Response status:", response.status);
+    const corsHeaders = getCorsHeaders(origin);
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  } catch (error) {
+    console.error("[AUTH GET] Error:", error);
+    throw error;
+  }
 }
 
 // POST 핸들러
 export async function POST(request: Request) {
+  const url = new URL(request.url);
+  console.log("[AUTH POST]", url.pathname);
+
   const origin = request.headers.get("origin");
-  const response = await handlers.POST(request);
-  const corsHeaders = getCorsHeaders(origin);
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
-  return response;
+  try {
+    const response = await handlers.POST(request);
+    console.log("[AUTH POST] Response status:", response.status);
+    const corsHeaders = getCorsHeaders(origin);
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  } catch (error) {
+    console.error("[AUTH POST] Error:", error);
+    throw error;
+  }
 }
