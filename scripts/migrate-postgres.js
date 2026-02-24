@@ -134,9 +134,39 @@ const migrations = [
 
   // Prayer 기존 컬럼 보정
   `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "authorName" TEXT`,
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "authorId" TEXT`,
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "isAnonymous" BOOLEAN DEFAULT false`,
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()`,
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()`,
   `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "prayerCount" INTEGER DEFAULT 0`,
   `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "commentCount" INTEGER DEFAULT 0`,
   `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "isAnswered" BOOLEAN DEFAULT false`,
+
+  // snake_case legacy 스키마 -> camelCase 컬럼 백필 및 제약 완화
+  `DO $$
+   BEGIN
+     IF EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = 'prayer'
+         AND column_name = 'author_id'
+     ) THEN
+       UPDATE prayer
+       SET
+         "authorId" = COALESCE("authorId", author_id),
+         "authorName" = COALESCE("authorName", author_name),
+         "isAnonymous" = COALESCE("isAnonymous", is_anonymous),
+         "prayerCount" = COALESCE("prayerCount", prayer_count),
+         "isAnswered" = COALESCE("isAnswered", is_answered),
+         "createdAt" = COALESCE("createdAt", created_at, NOW()),
+         "updatedAt" = COALESCE("updatedAt", updated_at, NOW());
+
+       ALTER TABLE prayer
+       ALTER COLUMN author_id DROP NOT NULL;
+     END IF;
+   END
+   $$`,
 
   // 기존 prayedCount 컬럼에서 prayerCount로 백필
   `DO $$
