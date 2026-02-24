@@ -192,7 +192,9 @@ async function PrayerList({ category, page }: { category?: string; page: number 
 
             {/* Content */}
             <h2 className="text-[15px] font-semibold text-foreground mb-2">
-              {prayer.title}
+              <Link href={`/prayer/${prayer.id}`} className="hover:text-primary transition-colors">
+                {prayer.title}
+              </Link>
             </h2>
             <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
               {prayer.content}

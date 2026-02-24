@@ -141,7 +141,7 @@ export default async function NewsGrid() {
                 section.items.map((item) => (
                   <Link
                     key={item.id}
-                    href="/prayer"
+                    href={`/prayer/${item.id}`}
                     className="flex items-center justify-between px-5 py-3.5 hover:bg-secondary/30 transition-colors"
                   >
                     <div className="flex-1 min-w-0 pr-3">
