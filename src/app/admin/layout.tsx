@@ -1,38 +1,26 @@
 import { headers } from "next/headers";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { Pool } from "pg";
+import pool from "@/lib/db";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import { LogIn, ShieldAlert } from "lucide-react";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-});
-
 async function getAuthState() {
   try {
-    console.log("[ADMIN LAYOUT] Getting session...");
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
-    console.log("[ADMIN LAYOUT] Session:", session?.user?.id, session?.user?.email);
-
     if (!session?.user?.id) {
-      console.log("[ADMIN LAYOUT] No session found");
       return { authenticated: false, reason: "not_logged_in" as const };
     }
 
-    console.log("[ADMIN LAYOUT] Querying role for user:", session.user.id);
     const result = await pool.query(
       `SELECT role FROM "user" WHERE id = $1`,
       [session.user.id]
     );
 
-    console.log("[ADMIN LAYOUT] DB result:", result.rows);
     const userRole = result.rows[0]?.role || "user";
-    console.log("[ADMIN LAYOUT] User role:", userRole);
 
     if (userRole !== "admin") {
       return {

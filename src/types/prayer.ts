@@ -13,7 +13,7 @@ export interface Prayer {
   authorName: string;
   authorImage?: string;
   isAnonymous: boolean;
-  prayedCount: number;
+  prayerCount: number;
   commentCount: number;
   createdAt: string;
   updatedAt: string;

@@ -1,14 +1,6 @@
 import { headers } from "next/headers";
-import { Pool } from "pg";
 import { auth } from "./auth";
-
-// PostgreSQL 연결 풀
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 20000,
-  connectionTimeoutMillis: 10000,
-});
+import pool from "./db";
 
 export type UserRole = "user" | "pastor" | "admin";
 
@@ -47,8 +39,8 @@ export async function getSessionWithRole(): Promise<SessionWithRole | null> {
     return {
       user: {
         id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
+        name: session.user.name || session.user.email || "사용자",
+        email: session.user.email || "",
         image: session.user.image || undefined,
         role,
       },
@@ -123,5 +115,3 @@ export const canDeleteComment = (
 ): boolean => {
   return isAuthor || userRole === "admin";
 };
-
-export { pool };

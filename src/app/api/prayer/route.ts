@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import pool, { ensurePrayerTable } from "@/lib/db";
+import { getSessionWithRole } from "@/lib/auth-helpers";
 import { prayerSchema } from "@/lib/validations/prayer";
 
 // 기도 요청 생성
 export async function POST(request: NextRequest) {
   try {
     // 인증 확인
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getSessionWithRole();
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "로그인이 필요합니다" },
         { status: 401 }
@@ -25,7 +22,7 @@ export async function POST(request: NextRequest) {
     const result = prayerSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
-        { error: result.error.errors[0].message },
+        { error: result.error.issues[0]?.message || "입력값이 올바르지 않습니다" },
         { status: 400 }
       );
     }
@@ -39,9 +36,9 @@ export async function POST(request: NextRequest) {
     const client = await pool.connect();
     try {
       const queryResult = await client.query(
-        `INSERT INTO prayer (type, title, content, category, visibility, is_anonymous, author_id, author_name)
+        `INSERT INTO prayer (type, title, content, category, visibility, "isAnonymous", "authorId", "authorName")
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-         RETURNING id, created_at`,
+         RETURNING id, "createdAt"`,
         [
           type,
           title,
@@ -58,7 +55,7 @@ export async function POST(request: NextRequest) {
         success: true,
         prayer: {
           id: queryResult.rows[0].id,
-          createdAt: queryResult.rows[0].created_at,
+          createdAt: queryResult.rows[0].createdAt,
         },
       });
     } finally {
@@ -78,32 +75,50 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const rawPage = parseInt(searchParams.get("page") || "1", 10);
+    const rawLimit = parseInt(searchParams.get("limit") || "10", 10);
+    const page = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage);
+    const limit = Number.isNaN(rawLimit) ? 10 : Math.min(50, Math.max(1, rawLimit));
     const category = searchParams.get("category");
     const type = searchParams.get("type");
     const offset = (page - 1) * limit;
+    const session = await getSessionWithRole();
 
     // 테이블 확인
     await ensurePrayerTable();
 
     const client = await pool.connect();
     try {
-      let whereClause = "WHERE visibility = 'public'";
+      const whereConditions: string[] = [];
       const params: (string | number)[] = [];
       let paramIndex = 1;
 
+      if (!session?.user?.id) {
+        whereConditions.push(`visibility = 'public'`);
+      } else if (session.user.role === "pastor" || session.user.role === "admin") {
+        whereConditions.push(`visibility IN ('public', 'pastor_only')`);
+      } else {
+        whereConditions.push(
+          `(visibility = 'public' OR (visibility = 'pastor_only' AND "authorId" = $${paramIndex}))`
+        );
+        params.push(session.user.id);
+        paramIndex++;
+      }
+
       if (category) {
-        whereClause += ` AND category = $${paramIndex}`;
+        whereConditions.push(`category = $${paramIndex}`);
         params.push(category);
         paramIndex++;
       }
 
       if (type) {
-        whereClause += ` AND type = $${paramIndex}`;
+        whereConditions.push(`type = $${paramIndex}`);
         params.push(type);
         paramIndex++;
       }
+
+      const whereClause =
+        whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
 
       // 총 개수 조회
       const countResult = await client.query(
@@ -115,10 +130,10 @@ export async function GET(request: NextRequest) {
       // 목록 조회
       params.push(limit, offset);
       const listResult = await client.query(
-        `SELECT id, type, title, content, category, is_anonymous, author_name, prayer_count, is_answered, created_at
+        `SELECT id, type, title, content, category, visibility, "isAnonymous", "authorName", "authorId", "prayerCount", "isAnswered", "createdAt"
          FROM prayer
          ${whereClause}
-         ORDER BY created_at DESC
+         ORDER BY "createdAt" DESC
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         params
       );
@@ -130,11 +145,13 @@ export async function GET(request: NextRequest) {
           title: row.title,
           content: row.content,
           category: row.category,
-          isAnonymous: row.is_anonymous,
-          authorName: row.is_anonymous ? "익명" : row.author_name,
-          prayerCount: row.prayer_count,
-          isAnswered: row.is_answered,
-          createdAt: row.created_at,
+          visibility: row.visibility,
+          isAnonymous: row.isAnonymous,
+          authorName: row.isAnonymous ? "익명" : row.authorName,
+          prayerCount: row.prayerCount,
+          isAnswered: row.isAnswered,
+          createdAt: row.createdAt,
+          isMine: session?.user?.id ? row.authorId === session.user.id : false,
         })),
         pagination: {
           page,

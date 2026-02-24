@@ -7,6 +7,9 @@ const sql = postgres(process.env.DATABASE_URL, {
 
 // Better Auth PostgreSQL 테이블 생성
 const migrations = [
+  // UUID 생성 함수
+  `CREATE EXTENSION IF NOT EXISTS pgcrypto`,
+
   // User 테이블
   `CREATE TABLE IF NOT EXISTS "user" (
     id TEXT PRIMARY KEY,
@@ -98,20 +101,43 @@ const migrations = [
 
   // Prayer 테이블 (기도제목/간증)
   `CREATE TABLE IF NOT EXISTS prayer (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     type TEXT NOT NULL DEFAULT 'request',
     title TEXT NOT NULL,
     content TEXT NOT NULL,
-    category TEXT DEFAULT 'general',
+    category TEXT NOT NULL DEFAULT 'general',
     visibility TEXT NOT NULL DEFAULT 'public',
     "authorId" TEXT NOT NULL,
+    "authorName" TEXT,
     "isAnonymous" BOOLEAN DEFAULT false,
-    "prayedCount" INTEGER DEFAULT 0,
+    "prayerCount" INTEGER DEFAULT 0,
     "commentCount" INTEGER DEFAULT 0,
+    "isAnswered" BOOLEAN DEFAULT false,
     "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
     "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
     FOREIGN KEY ("authorId") REFERENCES "user"(id) ON DELETE CASCADE
   )`,
+
+  // Prayer 기존 컬럼 보정
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "authorName" TEXT`,
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "prayerCount" INTEGER DEFAULT 0`,
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "commentCount" INTEGER DEFAULT 0`,
+  `ALTER TABLE prayer ADD COLUMN IF NOT EXISTS "isAnswered" BOOLEAN DEFAULT false`,
+
+  // 기존 prayedCount 컬럼에서 prayerCount로 백필
+  `DO $$
+   BEGIN
+     IF EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = 'prayer'
+         AND column_name = 'prayedCount'
+     ) THEN
+       EXECUTE 'UPDATE prayer SET "prayerCount" = "prayedCount" WHERE "prayedCount" IS NOT NULL AND COALESCE("prayerCount", 0) = 0';
+     END IF;
+   END
+   $$`,
 
   // Prayer 인덱스
   `CREATE INDEX IF NOT EXISTS idx_prayer_authorId ON prayer("authorId")`,
@@ -121,9 +147,10 @@ const migrations = [
 
   // Prayer Comment 테이블 (기도 댓글)
   `CREATE TABLE IF NOT EXISTS prayer_comment (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     "prayerId" TEXT NOT NULL,
     "authorId" TEXT NOT NULL,
+    "authorName" TEXT,
     content TEXT NOT NULL,
     "isAnonymous" BOOLEAN DEFAULT false,
     "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -138,7 +165,7 @@ const migrations = [
 
   // Prayer Reaction 테이블 (기도했어요)
   `CREATE TABLE IF NOT EXISTS prayer_reaction (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     "prayerId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -153,9 +180,10 @@ const migrations = [
 
   // Pastor Response 테이블 (목사님 답변)
   `CREATE TABLE IF NOT EXISTS pastor_response (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     "prayerId" TEXT NOT NULL UNIQUE,
     "pastorId" TEXT NOT NULL,
+    "pastorName" TEXT,
     content TEXT NOT NULL,
     "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
     "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),

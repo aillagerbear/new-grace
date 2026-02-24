@@ -35,20 +35,20 @@ const getRecentPrayers = cache(async function getRecentPrayers(): Promise<Prayer
 
     try {
       const result = await client.query(`
-        SELECT id, title, is_anonymous, author_name, prayer_count, is_answered, created_at
+        SELECT id, title, "isAnonymous", "authorName", "prayerCount", "isAnswered", "createdAt"
         FROM prayer
         WHERE visibility = 'public'
-        ORDER BY created_at DESC
+        ORDER BY "createdAt" DESC
         LIMIT 6
       `);
 
       return result.rows.map((row) => ({
         id: row.id,
         title: row.title,
-        authorName: row.is_anonymous ? "익명" : (row.author_name || "익명"),
-        prayerCount: row.prayer_count,
-        isAnswered: row.is_answered,
-        createdAt: row.created_at,
+        authorName: row.isAnonymous ? "익명" : (row.authorName || "익명"),
+        prayerCount: row.prayerCount,
+        isAnswered: row.isAnswered,
+        createdAt: row.createdAt,
       }));
     } finally {
       client.release();

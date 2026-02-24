@@ -15,7 +15,10 @@ const LoginModal = dynamic(
 );
 
 // rendering-hoist-jsx: 정적 데이터를 컴포넌트 외부로 추출
-const NAV_ITEMS = [
+type NavChild = { label: string; href: string };
+type NavItem = { label: string; href: string; children?: NavChild[] };
+
+const NAV_ITEMS: NavItem[] = [
   { label: "기도 요청", href: "/prayer" },
   { label: "함께 기도", href: "/pray-together" },
   { label: "응답 이야기", href: "/testimonies" },
@@ -29,7 +32,7 @@ const NAV_ITEMS = [
       { label: "문의하기", href: "/contact" },
     ],
   },
-] as const;
+];
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);

@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+const PRAYER_TYPES = ["request", "testimony"] as const;
+const PRAYER_CATEGORIES = ["general", "health", "family", "work", "study", "etc"] as const;
+const PRAYER_VISIBILITIES = ["public", "pastor_only"] as const;
+
 export const prayerSchema = z.object({
-  type: z.enum(["request", "testimony"], {
-    required_error: "기도 유형을 선택해주세요",
-  }),
+  type: z.enum(PRAYER_TYPES, { error: "기도 유형을 선택해주세요" }),
   title: z
     .string()
     .min(2, "제목은 2자 이상 입력해주세요")
@@ -12,12 +14,8 @@ export const prayerSchema = z.object({
     .string()
     .min(10, "내용은 10자 이상 입력해주세요")
     .max(5000, "내용은 5000자 이내로 입력해주세요"),
-  category: z.enum(["general", "health", "family", "work", "study", "etc"], {
-    required_error: "카테고리를 선택해주세요",
-  }),
-  visibility: z.enum(["public", "pastor_only"], {
-    required_error: "공개 범위를 선택해주세요",
-  }),
+  category: z.enum(PRAYER_CATEGORIES, { error: "카테고리를 선택해주세요" }),
+  visibility: z.enum(PRAYER_VISIBILITIES, { error: "공개 범위를 선택해주세요" }),
   isAnonymous: z.boolean().default(false),
 });
 

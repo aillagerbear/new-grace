@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-});
+import pool from "@/lib/db";
 
 export async function GET() {
   try {

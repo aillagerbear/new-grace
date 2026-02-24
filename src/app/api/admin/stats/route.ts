@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-});
+import pool from "@/lib/db";
 
 async function verifyAdminSession() {
   try {

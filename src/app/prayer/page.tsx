@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, HandHeart, Clock } from "lucide-react";
 import pool, { ensurePrayerTable } from "@/lib/db";
+import { getSessionWithRole } from "@/lib/auth-helpers";
 import PrayerFilter from "@/components/prayer/prayer-filter";
 import PrayerPagination from "@/components/prayer/prayer-pagination";
 
@@ -11,11 +12,13 @@ interface Prayer {
   title: string;
   content: string;
   category: string;
+  visibility: "public" | "pastor_only";
   isAnonymous: boolean;
   authorName: string;
   prayerCount: number;
   isAnswered: boolean;
   createdAt: string;
+  isMine: boolean;
 }
 
 interface PrayerListResult {
@@ -54,19 +57,35 @@ async function getPrayers(category?: string, page: number = 1): Promise<PrayerLi
   try {
     await ensurePrayerTable();
     const client = await pool.connect();
+    const session = await getSessionWithRole();
     const limit = 10;
     const offset = (page - 1) * limit;
 
     try {
-      let whereClause = "WHERE visibility = 'public'";
+      const whereConditions: string[] = [];
       const params: (string | number)[] = [];
       let paramIndex = 1;
 
+      if (!session?.user?.id) {
+        whereConditions.push(`visibility = 'public'`);
+      } else if (session.user.role === "pastor" || session.user.role === "admin") {
+        whereConditions.push(`visibility IN ('public', 'pastor_only')`);
+      } else {
+        whereConditions.push(
+          `(visibility = 'public' OR (visibility = 'pastor_only' AND "authorId" = $${paramIndex}))`
+        );
+        params.push(session.user.id);
+        paramIndex++;
+      }
+
       if (category) {
-        whereClause += ` AND category = $${paramIndex}`;
+        whereConditions.push(`category = $${paramIndex}`);
         params.push(category);
         paramIndex++;
       }
+
+      const whereClause =
+        whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
 
       // Count total
       const countResult = await client.query(
@@ -78,10 +97,10 @@ async function getPrayers(category?: string, page: number = 1): Promise<PrayerLi
       // Get list
       params.push(limit, offset);
       const listResult = await client.query(
-        `SELECT id, type, title, content, category, is_anonymous, author_name, prayer_count, is_answered, created_at
+        `SELECT id, type, title, content, category, visibility, "isAnonymous", "authorName", "authorId", "prayerCount", "isAnswered", "createdAt"
          FROM prayer
          ${whereClause}
-         ORDER BY created_at DESC
+         ORDER BY "createdAt" DESC
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         params
       );
@@ -93,11 +112,13 @@ async function getPrayers(category?: string, page: number = 1): Promise<PrayerLi
           title: row.title,
           content: row.content,
           category: row.category,
-          isAnonymous: row.is_anonymous,
-          authorName: row.is_anonymous ? "익명" : row.author_name,
-          prayerCount: row.prayer_count,
-          isAnswered: row.is_answered,
-          createdAt: row.created_at,
+          visibility: row.visibility,
+          isAnonymous: row.isAnonymous,
+          authorName: row.isAnonymous ? "익명" : row.authorName,
+          prayerCount: row.prayerCount,
+          isAnswered: row.isAnswered,
+          createdAt: row.createdAt,
+          isMine: session?.user?.id ? row.authorId === session.user.id : false,
         })),
         pagination: {
           page,
@@ -155,6 +176,11 @@ async function PrayerList({ category, page }: { category?: string; page: number 
                 {prayer.isAnswered && (
                   <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full">
                     ✓ 응답됨
+                  </span>
+                )}
+                {prayer.visibility === "pastor_only" && (
+                  <span className="text-xs px-2 py-0.5 bg-indigo-500/10 text-indigo-600 rounded-full">
+                    목사님 전용
                   </span>
                 )}
               </div>
