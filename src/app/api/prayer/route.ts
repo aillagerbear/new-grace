@@ -32,11 +32,13 @@ export async function POST(request: NextRequest) {
     // DB에 저장
     const client = await pool.connect();
     try {
+      const id = crypto.randomUUID();
       const queryResult = await client.query(
-        `INSERT INTO prayer (type, title, content, category, visibility, "isAnonymous", "authorId", "authorName")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO prayer (id, type, title, content, category, visibility, "isAnonymous", "authorId", "authorName")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id, "createdAt"`,
         [
+          id,
           type,
           title,
           content,

@@ -44,12 +44,13 @@ export async function POST(
 
     await client.query("BEGIN");
 
+    const reactionId = crypto.randomUUID();
     const inserted = await client.query(
-      `INSERT INTO prayer_reaction ("prayerId", "userId")
-       VALUES ($1, $2)
+      `INSERT INTO prayer_reaction (id, "prayerId", "userId")
+       VALUES ($1, $2, $3)
        ON CONFLICT ("prayerId", "userId") DO NOTHING
        RETURNING id`,
-      [id, session.user.id]
+      [reactionId, id, session.user.id]
     );
 
     if (inserted.rowCount && inserted.rowCount > 0) {

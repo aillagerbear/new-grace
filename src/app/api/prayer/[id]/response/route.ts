@@ -118,9 +118,10 @@ export async function POST(
       return NextResponse.json({ error: "기도 요청을 찾을 수 없습니다" }, { status: 404 });
     }
 
+    const responseId = crypto.randomUUID();
     const responseResult = await client.query(
-      `INSERT INTO pastor_response ("prayerId", "pastorId", "pastorName", content)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO pastor_response (id, "prayerId", "pastorId", "pastorName", content)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT ("prayerId")
        DO UPDATE SET
          "pastorId" = EXCLUDED."pastorId",
@@ -135,7 +136,7 @@ export async function POST(
          content,
          "createdAt",
          "updatedAt"`,
-      [id, session.user.id, session.user.name || null, parsed.data.content]
+      [responseId, id, session.user.id, session.user.name || null, parsed.data.content]
     );
 
     await client.query(
