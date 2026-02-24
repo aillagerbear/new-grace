@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, Shield } from "lucide-react";
-import pool, { ensurePrayerTable } from "@/lib/db";
+import pool from "@/lib/db";
 import {
   canRespondAsPastor,
   canViewPrayer,
@@ -45,7 +45,7 @@ function formatDateTime(dateString: string) {
 }
 
 async function getPrayerDetail(prayerId: string) {
-  await ensurePrayerTable();
+
   const session = await getSessionWithRole();
 
   const prayerResult = await pool.query(

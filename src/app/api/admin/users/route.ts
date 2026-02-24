@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import pool from "@/lib/db";
+import type { PoolClient } from "pg";
 
 async function verifyAdminSession() {
   try {
@@ -20,6 +21,30 @@ async function verifyAdminSession() {
   } catch {
     return false;
   }
+}
+
+async function ensureDeletedAuthIdentityTable(client: PoolClient) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS deleted_auth_identity (
+      id BIGSERIAL PRIMARY KEY,
+      email TEXT,
+      "providerId" TEXT,
+      "providerAccountId" TEXT,
+      reason TEXT,
+      "deletedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS idx_deleted_auth_identity_email_lower
+    ON deleted_auth_identity (LOWER(email))
+  `);
+
+  await client.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_deleted_auth_identity_provider_account_unique
+    ON deleted_auth_identity("providerId", "providerAccountId")
+    WHERE "providerId" IS NOT NULL AND "providerAccountId" IS NOT NULL
+  `);
 }
 
 export async function GET(request: NextRequest) {
@@ -101,13 +126,88 @@ export async function DELETE(request: NextRequest) {
 
     const { userId } = await request.json();
 
-    if (!userId) {
+    if (typeof userId !== "string" || userId.trim().length === 0) {
       return NextResponse.json({ error: "User ID required" }, { status: 400 });
     }
+    const normalizedUserId = userId.trim();
 
-    await pool.query(`DELETE FROM "user" WHERE id = $1`, [userId]);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await ensureDeletedAuthIdentityTable(client);
 
-    return NextResponse.json({ success: true });
+      const userResult = await client.query<{ email: string | null }>(
+        `SELECT email FROM "user" WHERE id = $1`,
+        [normalizedUserId]
+      );
+
+      if (!userResult.rows[0]) {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      const normalizedEmail = userResult.rows[0].email?.trim().toLowerCase() ?? null;
+
+      if (normalizedEmail) {
+        await client.query(
+          `
+            INSERT INTO deleted_auth_identity (email, "deletedAt")
+            SELECT $1, NOW()
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM deleted_auth_identity
+              WHERE email IS NOT NULL
+                AND LOWER(email) = LOWER($1)
+            )
+          `,
+          [normalizedEmail]
+        );
+      }
+
+      const accountResult = await client.query<{
+        providerId: string | null;
+        accountId: string | null;
+      }>(
+        `
+          SELECT "providerId" AS "providerId", "accountId" AS "accountId"
+          FROM account
+          WHERE "userId" = $1
+        `,
+        [normalizedUserId]
+      );
+
+      for (const row of accountResult.rows) {
+        if (!row.providerId || !row.accountId) continue;
+
+        await client.query(
+          `
+            INSERT INTO deleted_auth_identity (email, "providerId", "providerAccountId", "deletedAt")
+            SELECT $1, $2, $3, NOW()
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM deleted_auth_identity
+              WHERE "providerId" = $2
+                AND "providerAccountId" = $3
+            )
+          `,
+          [normalizedEmail, row.providerId, row.accountId]
+        );
+      }
+
+      await client.query(`DELETE FROM "user" WHERE id = $1`, [normalizedUserId]);
+      await client.query("COMMIT");
+
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // rollback 실패는 원본 에러를 우선 반환
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error("Error deleting user:", error);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, HandHeart, Clock } from "lucide-react";
-import pool, { ensurePrayerTable } from "@/lib/db";
+import pool from "@/lib/db";
 import { getSessionWithRole } from "@/lib/auth-helpers";
 import PrayerFilter from "@/components/prayer/prayer-filter";
 import PrayerPagination from "@/components/prayer/prayer-pagination";
@@ -55,7 +55,7 @@ function formatTimeAgo(dateString: string) {
 
 async function getPrayers(category?: string, page: number = 1): Promise<PrayerListResult> {
   try {
-    await ensurePrayerTable();
+
     const client = await pool.connect();
     const session = await getSessionWithRole();
     const limit = 10;

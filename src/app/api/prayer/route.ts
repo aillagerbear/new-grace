@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool, { ensurePrayerTable } from "@/lib/db";
+import pool from "@/lib/db";
 import { getSessionWithRole } from "@/lib/auth-helpers";
 import { prayerSchema } from "@/lib/validations/prayer";
 
@@ -28,9 +28,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { type, title, content, category, visibility, isAnonymous } = result.data;
-
-    // 테이블 확인
-    await ensurePrayerTable();
 
     // DB에 저장
     const client = await pool.connect();
@@ -83,9 +80,6 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const offset = (page - 1) * limit;
     const session = await getSessionWithRole();
-
-    // 테이블 확인
-    await ensurePrayerTable();
 
     const client = await pool.connect();
     try {

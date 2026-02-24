@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool, { ensurePrayerTable } from "@/lib/db";
+import pool from "@/lib/db";
 import { canViewPrayer, getSessionWithRole, type UserRole } from "@/lib/auth-helpers";
 
 interface PrayerRow {
@@ -33,7 +33,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensurePrayerTable();
+
     const { id } = await params;
     const session = await getSessionWithRole();
 

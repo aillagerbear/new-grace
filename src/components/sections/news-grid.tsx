@@ -1,7 +1,7 @@
 import { cache } from 'react';
 import Link from 'next/link';
 import { HandHeart, TrendingUp, Sparkles } from 'lucide-react';
-import pool, { ensurePrayerTable } from '@/lib/db';
+import pool from '@/lib/db';
 
 interface Prayer {
   id: string;
@@ -30,7 +30,7 @@ function formatTimeAgo(dateString: string) {
 // server-cache-react: React.cache()로 요청 당 중복 호출 방지
 const getRecentPrayers = cache(async function getRecentPrayers(): Promise<Prayer[]> {
   try {
-    await ensurePrayerTable();
+
     const client = await pool.connect();
 
     try {

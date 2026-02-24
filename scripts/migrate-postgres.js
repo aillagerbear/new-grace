@@ -53,6 +53,16 @@ const migrations = [
     FOREIGN KEY ("userId") REFERENCES "user"(id) ON DELETE CASCADE
   )`,
 
+  // 관리자 삭제 후 소셜 재가입 차단용 테이블
+  `CREATE TABLE IF NOT EXISTS deleted_auth_identity (
+    id BIGSERIAL PRIMARY KEY,
+    email TEXT,
+    "providerId" TEXT,
+    "providerAccountId" TEXT,
+    reason TEXT,
+    "deletedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+
   // Verification 테이블
   `CREATE TABLE IF NOT EXISTS verification (
     id TEXT PRIMARY KEY,
@@ -66,6 +76,10 @@ const migrations = [
   // 인덱스 생성
   `CREATE INDEX IF NOT EXISTS idx_session_userId ON session("userId")`,
   `CREATE INDEX IF NOT EXISTS idx_account_userId ON account("userId")`,
+  `CREATE INDEX IF NOT EXISTS idx_deleted_auth_identity_email_lower ON deleted_auth_identity(LOWER(email))`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_deleted_auth_identity_provider_account_unique
+    ON deleted_auth_identity("providerId", "providerAccountId")
+    WHERE "providerId" IS NOT NULL AND "providerAccountId" IS NOT NULL`,
   `CREATE INDEX IF NOT EXISTS idx_verification_identifier ON verification(identifier)`,
 
   // 기존 테이블에 누락된 컬럼 추가 (ALTER TABLE)

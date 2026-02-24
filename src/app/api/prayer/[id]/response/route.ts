@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool, { ensurePrayerTable } from "@/lib/db";
+import pool from "@/lib/db";
 import {
   canRespondAsPastor,
   canViewPrayer,
@@ -31,7 +31,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensurePrayerTable();
+
     const { id } = await params;
     const session = await getSessionWithRole();
     const prayer = await findPrayerById(id);
@@ -79,7 +79,6 @@ export async function POST(
 ) {
   const client = await pool.connect();
   try {
-    await ensurePrayerTable();
 
     const session = await getSessionWithRole();
     if (!session?.user?.id) {

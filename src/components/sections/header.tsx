@@ -11,7 +11,10 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 // bundle-dynamic-imports: 모달은 필요할 때만 로드
 const LoginModal = dynamic(
   () => import("@/components/auth/login-modal").then((mod) => mod.LoginModal),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => null,
+  }
 );
 
 // rendering-hoist-jsx: 정적 데이터를 컴포넌트 외부로 추출
@@ -236,10 +239,12 @@ const Header = () => {
       </header>
       <div className="h-16" /> {/* Spacer */}
 
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={closeLoginModal}
-      />
+      {isLoginModalOpen ? (
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={closeLoginModal}
+        />
+      ) : null}
     </>
   );
 };

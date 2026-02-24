@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import pool, { ensurePrayerTable } from "@/lib/db";
+import pool from "@/lib/db";
 import { PRAYER_CATEGORY_LABELS, PrayerCategory } from "@/types/prayer";
 
 // 카테고리별 기도 요청 개수 조회
 export async function GET() {
   try {
-    await ensurePrayerTable();
 
     const client = await pool.connect();
     try {

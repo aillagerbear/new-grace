@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 
 /**
  * HeroCarousel Component - Prayer Community Platform (Server Component)
@@ -7,15 +6,14 @@ import Image from 'next/image';
 export default function HeroCarousel() {
   return (
     <div className="relative overflow-hidden w-full rounded-2xl min-h-[280px] md:min-h-[320px]">
-      {/* Background Image - priority로 preload, placeholder 제거로 즉시 표시 */}
-      <Image
+      {/* Background Image - 정적 파일 직접 로드로 첫 요청 변환 비용 제거 */}
+      <img
         src="/prayer_community_background.webp"
         alt="기도 커뮤니티 배경"
-        fill
-        priority
-        className="object-cover"
-        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
-        quality={85}
+        className="absolute inset-0 h-full w-full object-cover"
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
       />
       {/* Content */}
       <div className="relative z-10 px-8 py-16 md:py-20 text-center">
